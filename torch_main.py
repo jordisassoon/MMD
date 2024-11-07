@@ -4,37 +4,6 @@ import tqdm
 import numpy as np
 from scipy.stats import norm
 
-np.random.seed(0)
-torch.manual_seed(0)
-
-data = np.genfromtxt("data/newcomb.txt", delimiter=",", filling_values=np.nan)
-data = data[~np.isnan(data)]  # Remove NaN values if any
-
-# Step 2: Fit a normal distribution to the data
-mu, std = norm.fit(data[data > 0])
-fitted_samples = np.random.normal(mu, std, size=1000)
-
-dist_x = torch.from_numpy(data)
-dist_y = torch.from_numpy(fitted_samples)
-x = dist_x
-y = dist_y
-
-
-# z = torch.linspace(-0.5, 1.5, 100)
-# pyplot.scatter(x, torch.zeros_like(x), marker='+')
-# raw_density_x = dist_x.log_prob(z).exp()
-# raw_density_y = dist_y.log_prob(z).exp()
-# density_x = torch.where(raw_density_x.isnan(), torch.tensor(0.0), raw_density_x)
-# density_y = torch.where(raw_density_y.isnan(), torch.tensor(0.0), raw_density_y)
-# pyplot.plot(z, density_x)
-# pyplot.plot(z, density_y)
-
-# sigma = 0.1
-# raw_hat_p_x = torch.exp(-((x[None] - z[:, None])**2)/(2*sigma**2)).sum(1)
-# hat_p_x = (raw_hat_p_x / raw_hat_p_x.sum() / (z[1]-z[0]))
-# pyplot.plot(z, hat_p_x)
-# pyplot.plot(z, density_x)
-
 # 1. Radial Basis Function (RBF) Kernel
 def rbf_kernel(x, y, sigma=1.0, linear=False):
     if linear:
@@ -76,9 +45,6 @@ def cosine_similarity_kernel(x, y):
     return torch.dot(x, y) / (torch.norm(x) * torch.norm(y))
 
 
-kernel = laplacian_kernel
-
-
 def mmd(x, y, sigma):
     # compare kernel MMD paper and code:
     # A. Gretton et al.: A kernel two-sample test, JMLR 13 (2012)
@@ -98,16 +64,50 @@ def mmd(x, y, sigma):
     mmd = k_x.sum() / (n * n) + k_y.sum() / (m * m) - 2 * k_xy.sum() / (n * m)
     return mmd
 
+np.random.seed(0)
+torch.manual_seed(0)
 
-dists = torch.pdist(torch.cat([x, y], dim=0)[:, None])
-sigma = dists.median() / 2
+# data = np.genfromtxt("data/newcomb.txt", delimiter=",", filling_values=np.nan)
+# data = data[~np.isnan(data)]  # Remove NaN values if any
+#
+# # Step 2: Fit a normal distribution to the data
+# mu, std = norm.fit(data[data > 0])
 
-print(sigma) # 2.5
-
-sigmas = np.linspace(0.1, 10, 100)
 ps = []
 
-for sigma in sigmas:
+mu, std = 2, 1
+for n in tqdm.tqdm(range(4, 100)):
+    data = np.random.normal(mu, std, size=n)
+    fitted_samples = np.random.normal(mu + 1, std, size=n)
+
+    dist_x = torch.from_numpy(data)
+    dist_y = torch.from_numpy(fitted_samples)
+    x = dist_x
+    y = dist_y
+
+
+    # z = torch.linspace(-0.5, 1.5, 100)
+    # pyplot.scatter(x, torch.zeros_like(x), marker='+')
+    # raw_density_x = dist_x.log_prob(z).exp()
+    # raw_density_y = dist_y.log_prob(z).exp()
+    # density_x = torch.where(raw_density_x.isnan(), torch.tensor(0.0), raw_density_x)
+    # density_y = torch.where(raw_density_y.isnan(), torch.tensor(0.0), raw_density_y)
+    # pyplot.plot(z, density_x)
+    # pyplot.plot(z, density_y)
+
+    # sigma = 0.1
+    # raw_hat_p_x = torch.exp(-((x[None] - z[:, None])**2)/(2*sigma**2)).sum(1)
+    # hat_p_x = (raw_hat_p_x / raw_hat_p_x.sum() / (z[1]-z[0]))
+    # pyplot.plot(z, hat_p_x)
+    # pyplot.plot(z, density_x)
+
+    kernel = laplacian_kernel
+
+    dists = torch.pdist(torch.cat([x, y], dim=0)[:, None])
+    sigma = dists.median() / 2
+
+    # print(sigma) # 2.5
+
     our_mmd = mmd(x[:, None], y[:, None], sigma)
 
     N_X = len(x)
@@ -115,15 +115,14 @@ for sigma in sigmas:
     xy = torch.cat([x, y], dim=0)[:, None].double()
 
     mmds = []
-    for i in tqdm.tqdm(range(100)):
+    for i in range(100):
         xy = xy[torch.randperm(len(xy))]
         mmds.append(mmd(xy[:N_X], xy[N_X:], sigma).item())
     mmds = torch.tensor(mmds)
 
     p = (our_mmd < mmds).float().mean()
 
-    print(p)
-
+    # print(p)
     ps.append(p)
 
 # # Define the witness function
@@ -153,9 +152,9 @@ for sigma in sigmas:
 # plt.legend()
 # plt.show()
 
-plt.plot(sigmas, ps, lw=2, label="p-values")
+plt.plot(list(range(4, 100)), ps, lw=2, label="p-values")
 
-plt.xlabel("sigma")
+plt.xlabel("sample size")
 plt.ylabel("p-value")
 plt.legend()
 plt.show()
