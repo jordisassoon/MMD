@@ -74,6 +74,10 @@ torch.manual_seed(0)
 # mu, std = norm.fit(data[data > 0])
 
 ps = []
+x = None
+y = None
+sigma = None
+data = None
 
 mu, std = 2, 1
 for n in tqdm.tqdm(range(4, 100)):
@@ -125,36 +129,28 @@ for n in tqdm.tqdm(range(4, 100)):
     # print(p)
     ps.append(p)
 
-# # Define the witness function
-# def witness_function(z_values, x, y, sigma):
-#     # Compute witness function over a range of points
-#     witness_values = []
-#     for z in tqdm.tqdm(z_values):
-#         k_x_X = torch.mean(torch.tensor([rbf_kernel(z, x_i, sigma, linear=True) for x_i in x]))
-#         k_x_Y = torch.mean(torch.tensor([rbf_kernel(z, y_j, sigma, linear=True) for y_j in y]))
-#         witness_values.append((k_x_X - k_x_Y).item())
-#     return np.array(witness_values)
-#
-#
-# # Generate points on which to evaluate the witness function
-# z_values = torch.linspace(-60, 60, 100)
-#
-# # Calculate witness function values
-# witness_values = torch.tensor(witness_function(z_values, y, x, sigma))
-#
-# # Plot the witness function along with the data histogram and fitted distribution
-# plt.hist(data, bins=15, alpha=0.5, label="Data", density=True)
-# plt.plot(np.linspace(-60, 60, 100), norm.pdf(np.linspace(-60, 60, 100), mu, std), 'r-', lw=2, label="Fitted normal")
-# plt.plot(z_values.numpy(), witness_values.numpy(), 'g--', lw=2, label="Witness function")
-#
-# plt.xlabel("Deviations from 24,800 nanoseconds")
-# plt.ylabel("Density / Witness function")
-# plt.legend()
-# plt.show()
+# Define the witness function
+def witness_function(z_values, x, y, sigma):
+    # Compute witness function over a range of points
+    witness_values = []
+    for z in tqdm.tqdm(z_values):
+        k_x_X = torch.mean(torch.tensor([rbf_kernel(z, x_i, sigma, linear=True) for x_i in x]))
+        k_x_Y = torch.mean(torch.tensor([rbf_kernel(z, y_j, sigma, linear=True) for y_j in y]))
+        witness_values.append((k_x_X - k_x_Y).item())
+    return np.array(witness_values)
 
-plt.plot(list(range(4, 100)), ps, lw=2, label="p-values")
 
-plt.xlabel("sample size")
-plt.ylabel("p-value")
+# Generate points on which to evaluate the witness function
+z_values = torch.linspace(-2, 8, 100)
+
+# Calculate witness function values
+witness_values = torch.tensor(witness_function(z_values, y, x, sigma))
+
+# Plot the witness function along with the data histogram and fitted distribution
+plt.plot(np.linspace(-2, 8, 100), norm.pdf(np.linspace(-2, 8, 100), mu, std), 'b-', lw=2, label="Data")
+plt.plot(np.linspace(-2, 8, 100), norm.pdf(np.linspace(-2, 8, 100), mu + 1, std), 'r-', lw=2, label="Fitted normal")
+plt.plot(z_values.numpy(), witness_values.numpy(), 'g--', lw=2, label="Witness function")
+
+plt.ylabel("Density / Witness function")
 plt.legend()
 plt.show()
