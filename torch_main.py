@@ -4,6 +4,7 @@ import tqdm
 import numpy as np
 from scipy.stats import norm
 
+
 # 1. Radial Basis Function (RBF) Kernel
 def rbf_kernel(x, y, sigma=1.0, linear=False):
     if linear:
@@ -64,6 +65,7 @@ def mmd(x, y, sigma):
     mmd = k_x.sum() / (n * n) + k_y.sum() / (m * m) - 2 * k_xy.sum() / (n * m)
     return mmd
 
+
 np.random.seed(0)
 torch.manual_seed(0)
 
@@ -78,17 +80,21 @@ x = None
 y = None
 sigma = None
 data = None
+outlier = None
 
 mu, std = 2, 1
-for n in tqdm.tqdm(range(4, 100)):
-    data = np.random.normal(mu, std, size=n)
-    fitted_samples = np.random.normal(mu + 1, std, size=n)
+for n in tqdm.tqdm(range(0, 26)):
+    data = np.random.normal(mu, std, size=100)
+    # fitted_samples = np.random.normal(mu, std, size=100 - n)
 
     dist_x = torch.from_numpy(data)
-    dist_y = torch.from_numpy(fitted_samples)
+    dist_y = torch.from_numpy(data)
     x = dist_x
     y = dist_y
 
+    if n > 0:
+        outlier = torch.tensor(np.random.normal(mu + 4 * std, std, n))
+        y = torch.cat([y[:100 - n], outlier])
 
     # z = torch.linspace(-0.5, 1.5, 100)
     # pyplot.scatter(x, torch.zeros_like(x), marker='+')
@@ -119,7 +125,7 @@ for n in tqdm.tqdm(range(4, 100)):
     xy = torch.cat([x, y], dim=0)[:, None].double()
 
     mmds = []
-    for i in range(100):
+    for i in range(1000):
         xy = xy[torch.randperm(len(xy))]
         mmds.append(mmd(xy[:N_X], xy[N_X:], sigma).item())
     mmds = torch.tensor(mmds)
@@ -128,6 +134,7 @@ for n in tqdm.tqdm(range(4, 100)):
 
     # print(p)
     ps.append(p)
+
 
 # Define the witness function
 def witness_function(z_values, x, y, sigma):
@@ -148,9 +155,14 @@ witness_values = torch.tensor(witness_function(z_values, y, x, sigma))
 
 # Plot the witness function along with the data histogram and fitted distribution
 plt.plot(np.linspace(-2, 8, 100), norm.pdf(np.linspace(-2, 8, 100), mu, std), 'b-', lw=2, label="Data")
-plt.plot(np.linspace(-2, 8, 100), norm.pdf(np.linspace(-2, 8, 100), mu + 1, std), 'r-', lw=2, label="Fitted normal")
+plt.plot(np.linspace(-2, 8, 100), norm.pdf(np.linspace(-2, 8, 100), mu, std), 'r-', lw=2, label="Fitted normal")
+plt.scatter(outlier, [1 for _ in range(25)], s=20, color='purple', label="Outliers")
 plt.plot(z_values.numpy(), witness_values.numpy(), 'g--', lw=2, label="Witness function")
 
 plt.ylabel("Density / Witness function")
+plt.legend()
+plt.show()
+
+plt.plot(list(range(0, 26)), ps, 'b-', lw=2, label="p-values")
 plt.legend()
 plt.show()
