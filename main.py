@@ -172,7 +172,7 @@ def main(args):
     elif args.test == 'sigma':
         print("Exploring different sigma values for kernel...")
         data, mu, std = load_newcomb(ignore_outliers=args.ignore_outliers)
-        sigmas = np.linspace(0.1, 10, 100)
+        sigmas = np.linspace(0.1, 10, 25)
         p_values = []
         x, y, sigma = None, None, None
         for sigma in tqdm(sigmas):
