@@ -51,7 +51,7 @@ The main script accepts the following arguments:
   - `sample_size`: Examines the effect of varying sample sizes on p-values.
   - `outliers`: Evaluates the impact of outliers on the p-values.
   
-- `--ignore_outliers <True/False>`: Indicates whether to ignore outliers in the data (default is `True`).
+- `--ignore_outliers`: The presence of the flag indicates to ignore outliers in the data (default is `True`).
   
 - `--kernel <kernel_type>`: Specifies the kernel to use for MMD calculations. Options:
   - `rbf`: Radial Basis Function (RBF) kernel
@@ -64,25 +64,25 @@ Here are some examples of how to run specific tests:
 
 1. **Newcomb's Speed of Light Test**:
    ```bash
-   python main.py --test newcomb --ignore_outliers True --kernel rbf
+   python main.py --test newcomb --ignore_outliers --kernel rbf
    ```
    Runs the Newcomb test with outliers ignored and uses the RBF kernel.
 
 2. **Varying Sigma Test**:
    ```bash
-   python main.py --test sigma --kernel lap
+   python main.py --test sigma --kernel lap --ignore_outliers
    ```
    Explores how different sigma values impact p-values using the Laplacian kernel.
 
 3. **Varying Sample Size Test**:
    ```bash
-   python main.py --test sample_size --kernel lap
+   python main.py --test sample_size --kernel lap --ignore_outliers
    ```
    Runs the sample size experiment using the Laplacian kernel.
 
 4. **Outliers Test**:
    ```bash
-   python main.py --test outliers --kernel lap
+   python main.py --test outliers --kernel lap --ignore_outliers
    ```
    Investigates how the presence of outliers influences p-values using the Laplacian kernel.
 
