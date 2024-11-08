@@ -78,7 +78,7 @@ Here are some examples of how to run specific tests:
    ```bash
    python main.py --test sample_size --kernel lap
    ```
-   Runs the sample size experiment with the Exponential kernel.
+   Runs the sample size experiment using the Laplacian kernel.
 
 4. **Outliers Test**:
    ```bash
