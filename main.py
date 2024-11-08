@@ -164,6 +164,7 @@ def main(args):
         x, y, sigma, p_value = compute_p(data, mu, std, sample_size=1000, kernel=kernel)
         print(f"The p-value for Newcomb's test is: {p_value}")
 
+        # Compute witness function and plot
         z_values = torch.linspace(-60, 60, 100)
         w = witness_function(z_values, y, x, sigma, kernel)
         plotter.hist(x, mu, std, w)
@@ -180,42 +181,54 @@ def main(args):
                                          pretty_print=False)
             p_values.append(p_value)
 
+        # Compute witness function and plot p-values for sigma
         z_values = torch.linspace(-60, 60, 100)
         w = witness_function(z_values, y, x, sigma, kernel)
         plotter.hist(x, mu, std, w)
-        plotter.sigma_plot(sigmas, p_values)
+        plotter.simple_plot(sigmas, p_values, "sigma", "p-value")
 
     elif args.test == 'sample_size':
         print("Running experiment on varying sample sizes...")
         mu, std = 2, 1
         x, y, sigma = None, None, None
-        for size in tqdm(range(4, 100), desc="Sample size iteration"):
+        p_values = []
+        sizes = list(range(4, 100))
+        for size in tqdm(sizes, desc="Sample size iteration"):
             data = np.random.normal(mu, std, size=size)
             x, y, sigma, p_value = compute_p(data, mu + 1, std, sample_size=size, bootstrap_size=100, kernel=kernel,
                                              pretty_print=False)
+            p_values.append(p_value)
 
-        z_values = torch.linspace(-60, 60, 100)
+        # Compute witness function and plot for varying sample sizes
+        z_values = torch.linspace(-2, 8, 100)
         w = witness_function(z_values, y, x, sigma, kernel)
         plotter.double_gauss(mu, std, mu + 1, std, w)
+        plotter.simple_plot(sizes, p_values, "sample size", "p-value")
 
     elif args.test == 'outliers':
         print("Testing effect of outliers...")
         mu, std = 2, 1
         x, y, sigma = None, None, None
         n = None
-        for n in tqdm(range(0, 26), desc="Outlier iteration"):
+        p_values = []
+        n_values = list(range(0, 26))
+        for n in tqdm(n_values, desc="Outlier iteration"):
             data = np.random.normal(mu, std, size=100)
             x, y, sigma, p_value = compute_p(data, mu, std, fitted_samples=data, sample_size=100 - n,
                                              bootstrap_size=100,
                                              kernel=kernel, pretty_print=False, n_outliers=n)
+            p_values.append(p_value)
 
-        z_values = torch.linspace(-60, 60, 100)
+        # Compute witness function and plot with outliers
+        z_values = torch.linspace(-2, 8, 100)
         w = witness_function(z_values, y, x, sigma, kernel)
         outliers = y[-n:]
         plotter.outliers(mu, std, mu, std, w, outliers)
+        plotter.simple_plot(n_values, p_values, "n of outliers", "p-value")
 
 
 def parse_args():
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Run statistical experiments.")
     parser.add_argument('--test', type=str, required=True,
                         help="Specify the test to run. Options: 'newcomb', 'sigma', 'sample_size', 'outliers'")
