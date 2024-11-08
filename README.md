@@ -76,7 +76,7 @@ Here are some examples of how to run specific tests:
 
 3. **Varying Sample Size Test**:
    ```bash
-   python main.py --test sample_size --kernel exp
+   python main.py --test sample_size --kernel lap
    ```
    Runs the sample size experiment with the Exponential kernel.
 
